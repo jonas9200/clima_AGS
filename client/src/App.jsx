@@ -28,7 +28,7 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 🔄 Carregar lista de equipamentos
+  // 🔄 Carregar lista de sensores (equipamentos)
   useEffect(() => {
     carregarEquipamentos();
   }, []);
@@ -38,31 +38,46 @@ export default function App() {
     try {
       const url = `${baseUrl}/api/equipamentos`;
       const resp = await fetch(url);
-      if (!resp.ok) throw new Error("Erro ao buscar equipamentos");
+      if (!resp.ok) throw new Error("Erro ao buscar sensores");
       const json = await resp.json();
       
       const listaEquipamentos = json.equipamentos || [];
-      setEquipamentos(listaEquipamentos);
       
-      // ✅ SEMPRE define o primeiro equipamento quando a lista estiver pronta
-      if (listaEquipamentos.length > 0) {
-        setEquipamento(listaEquipamentos[0]);
+      // Mapear sensor_id para nomes mais amigáveis
+      const equipamentosMapeados = listaEquipamentos.map(sensorId => {
+        switch(sensorId) {
+          case 1: return { id: sensorId, nome: "Sensor Chuva (ID 1)" };
+          case 2: return { id: sensorId, nome: "Sensor Temperatura (ID 2)" };
+          case 3: return { id: sensorId, nome: "Sensor Umidade (ID 3)" };
+          default: return { id: sensorId, nome: `Sensor ${sensorId}` };
+        }
+      });
+      
+      setEquipamentos(equipamentosMapeados);
+      
+      // Define o primeiro sensor como padrão
+      if (equipamentosMapeados.length > 0) {
+        setEquipamento(equipamentosMapeados[0].id.toString());
       }
     } catch (e) {
-      console.error("Erro ao carregar equipamentos:", e);
-      const listaPadrao = ["Pluviometro_01"];
+      console.error("Erro ao carregar sensores:", e);
+      // Lista padrão com os sensores esperados
+      const listaPadrao = [
+        { id: 1, nome: "Sensor Chuva (ID 1)" },
+        { id: 2, nome: "Sensor Temperatura (ID 2)" },
+        { id: 3, nome: "Sensor Umidade (ID 3)" }
+      ];
       setEquipamentos(listaPadrao);
-      setEquipamento(listaPadrao[0]);
+      setEquipamento("1");
     } finally {
       setLoadingEquipamentos(false);
     }
   }
 
-  // 🔄 NOVO: Aplicar filtro das 24h automaticamente quando equipamento estiver disponível
+  // 🔄 Aplicar filtro das 24h automaticamente quando equipamento estiver disponível
   useEffect(() => {
     if (equipamento && equipamento !== "") {
-      console.log("🎯 Aplicando filtro automático das 24h para:", equipamento);
-      // Pequeno delay para garantir que tudo está carregado
+      console.log("🎯 Aplicando filtro automático das 24h para sensor:", equipamento);
       setTimeout(() => {
         calcularPeriodoRapido("24h");
       }, 100);
@@ -114,7 +129,7 @@ export default function App() {
     const inicioBanco = toDatabaseFormat(toLocalDatetimeString(inicio));
     const finalBanco = toDatabaseFormat(toLocalDatetimeString(agora));
 
-    console.log(`📊 Aplicando filtro ${p}:`, { inicioBanco, finalBanco });
+    console.log(`📊 Aplicando filtro ${p} para sensor ${equipamento}:`, { inicioBanco, finalBanco });
     carregarComDatas(inicioBanco, finalBanco);
   }
 
@@ -136,6 +151,8 @@ export default function App() {
       const lista = json.dados || [];
       setDados(lista);
       setTotalChuva(json.total_chuva || 0);
+      
+      console.log(`✅ Dados recebidos: ${lista.length} registros transformados`);
       
     } catch (e) {
       setErro("Falha ao carregar dados. Verifique a API.");
@@ -233,6 +250,9 @@ export default function App() {
   const temperatura = agrupados.map((d) => d.temperatura);
   const umidade = agrupados.map((d) => d.umidade);
   const chuva = agrupados.map((d) => d.chuva);
+
+  // Obter nome do sensor selecionado
+  const sensorSelecionado = equipamentos.find(eqp => eqp.id.toString() === equipamento)?.nome || `Sensor ${equipamento}`;
 
   // Configurações dos gráficos para dark mode
   const chartOptions = {
@@ -446,7 +466,7 @@ export default function App() {
     select: {
       padding: "12px",
       border: "1px solid #475569",
-      borderRadius: "8px",
+      borderRadius: "8box",
       fontSize: isMobile ? "0.85rem" : "0.9rem",
       backgroundColor: "#1e293b",
       color: "#e2e8f0",
@@ -692,7 +712,7 @@ export default function App() {
               <div style={styles.logo}>🌦️</div>
               <div>
                 <h1 style={styles.title}>Fazenda Ribeirão Preto</h1>
-                <p style={styles.subtitle}>Monitoramento Meteorológico</p>
+                <p style={styles.subtitle}>Monitoramento Meteorológico - Sistema de Sensores</p>
               </div>
             </div>
           </div>
@@ -705,8 +725,8 @@ export default function App() {
               </div>
               {!isMobile && (
                 <div style={styles.statCard}>
-                  <div style={styles.statValue}>{equipamento}</div>
-                  <div style={styles.statLabel}>Equipamento</div>
+                  <div style={styles.statValue}>{sensorSelecionado}</div>
+                  <div style={styles.statLabel}>Sensor Ativo</div>
                 </div>
               )}
             </div>
@@ -720,11 +740,11 @@ export default function App() {
         
         <div style={styles.formGrid}>
           <div style={styles.formGroup}>
-            <label style={styles.label}>📡 Equipamento</label>
+            <label style={styles.label}>📡 Sensor</label>
             {loadingEquipamentos ? (
               <div style={styles.loading}>
                 <div style={styles.spinner}></div>
-                <span>Carregando equipamentos...</span>
+                <span>Carregando sensores...</span>
               </div>
             ) : (
               <select
@@ -734,10 +754,10 @@ export default function App() {
                 onFocus={(e) => e.target.style.borderColor = "#60a5fa"}
                 onBlur={(e) => e.target.style.borderColor = "#475569"}
               >
-                <option value="">Selecione um equipamento</option>
+                <option value="">Selecione um sensor</option>
                 {equipamentos.map((eqp) => (
-                  <option key={eqp} value={eqp}>
-                    {eqp}
+                  <option key={eqp.id} value={eqp.id}>
+                    {eqp.nome}
                   </option>
                 ))}
               </select>
@@ -840,15 +860,15 @@ export default function App() {
           <div style={styles.emptyState}>
             <div style={{ fontSize: "4rem", marginBottom: "15px" }}>📈</div>
             <h3 style={{ marginBottom: "10px", color: "#e2e8f0" }}>Nenhum dado encontrado</h3>
-            <p style={{ margin: 0 }}>Não há dados disponíveis para os filtros selecionados.</p>
+            <p style={{ margin: 0 }}>Não há dados disponíveis para o sensor e período selecionados.</p>
           </div>
         )}
 
         {!equipamento && !loadingEquipamentos && (
           <div style={styles.emptyState}>
             <div style={{ fontSize: "4rem", marginBottom: "15px" }}>📡</div>
-            <h3 style={{ marginBottom: "10px", color: "#e2e8f0" }}>Selecione um equipamento</h3>
-            <p style={{ margin: 0 }}>Escolha um equipamento da lista para visualizar os dados.</p>
+            <h3 style={{ marginBottom: "10px", color: "#e2e8f0" }}>Selecione um sensor</h3>
+            <p style={{ margin: 0 }}>Escolha um sensor da lista para visualizar os dados.</p>
           </div>
         )}
       </div>
@@ -909,7 +929,7 @@ export default function App() {
                   gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", 
                   gap: "15px" 
                 }}>
-                  <div><strong>📡 Equipamento:</strong> {equipamento}</div>
+                  <div><strong>📡 Sensor:</strong> {sensorSelecionado}</div>
                   <div><strong>🕐 Data Inicial:</strong> {new Date(agrupados[0].hora).toLocaleString('pt-BR')}</div>
                   <div><strong>🕐 Data Final:</strong> {new Date(agrupados[agrupados.length - 1].hora).toLocaleString('pt-BR')}</div>
                   <div><strong>🌧️ Chuva Total:</strong> {totalChuva.toFixed(2)} mm</div>
