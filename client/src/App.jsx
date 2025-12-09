@@ -361,19 +361,6 @@ export default function App() {
       display: "flex",
       alignItems: "center",
       gap: "15px",
-      width: "100%",
-    },
-    headerLeft: {
-      display: "flex",
-      alignItems: "center",
-      gap: "15px",
-      flex: 1,
-    },
-    headerRight: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "flex-end",
-      flex: 1,
     },
     logo: {
       fontSize: isMobile ? "2rem" : "2.5rem",
@@ -702,70 +689,76 @@ export default function App() {
 
   return (
     <div style={styles.container}>
+      {/* BOTÃO ACIMA DO CABEÇALHO PRINCIPAL */}
+      <div style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        marginBottom: "15px",
+        position: "sticky",
+        top: "10px",
+        zIndex: 100
+      }}>
+        <button 
+          onClick={redirecionarParaOperador}
+          style={{
+            padding: "12px 24px",
+            background: "linear-gradient(135deg, #10b981, #059669)",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            fontSize: isMobile ? "0.85rem" : "0.9rem",
+            fontWeight: "600",
+            cursor: "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
+            whiteSpace: "nowrap",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            backdropFilter: "blur(10px)",
+            border: "1px solid rgba(16, 185, 129, 0.3)"
+          }}
+          onMouseOver={(e) => {
+            e.target.style.transform = "translateY(-2px)";
+            e.target.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.4)";
+          }}
+          onMouseOut={(e) => {
+            e.target.style.transform = "translateY(0)";
+            e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
+          }}
+        >
+          🚀 Ir para Operador
+        </button>
+      </div>
+
       {/* 🎯 HEADER ELEGANTE - DARK MODE */}
       <header style={styles.header}>
         <div style={styles.headerContent}>
-          {/* LADO ESQUERDO - BOTÃO E LOGO */}
-          <div style={styles.headerLeft}>
-            {/* BOTÃO DE REDIRECIONAMENTO PARA OPERADOR (AGORA NO LADO ESQUERDO) */}
-            <button 
-              onClick={redirecionarParaOperador}
-              style={{
-                padding: isMobile ? "10px 15px" : "12px 20px",
-                background: "linear-gradient(135deg, #10b981, #059669)",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: isMobile ? "0.8rem" : "0.9rem",
-                fontWeight: "600",
-                cursor: "pointer",
-                transition: "all 0.3s ease",
-                boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
-                whiteSpace: "nowrap",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginRight: "15px"
-              }}
-              onMouseOver={(e) => {
-                e.target.style.transform = "translateY(-2px)";
-                e.target.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.4)";
-              }}
-              onMouseOut={(e) => {
-                e.target.style.transform = "translateY(0)";
-                e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
-              }}
-            >
-              {isMobile ? "🚀" : "🚀 Lista"}
-            </button>
-            
-            {/* LOGO E TÍTULO */}
+          <div>
             <div style={styles.titleSection}>
               <div style={styles.logo}>🌦️</div>
               <div>
-                <h1 style={styles.title}>AGS Clima</h1>
+                <h1 style={styles.title}> AGS Clima</h1>
                 <p style={styles.subtitle}>Monitoramento Meteorológico</p>
               </div>
             </div>
           </div>
-
-          {/* LADO DIREITO - ESTATÍSTICAS */}
-          <div style={styles.headerRight}>
-            {!loading && !erro && agrupados.length > 0 && (
-              <div style={styles.statsGrid}>
-                <div style={styles.statCard}>
-                  <div style={styles.statValue}>{totalChuva.toFixed(2)} mm</div>
-                  <div style={styles.statLabel}>Total de Chuva</div>
-                </div>
-                {!isMobile && (
-                  <div style={styles.statCard}>
-                    <div style={styles.statValue}>{equipamento}</div>
-                    <div style={styles.statLabel}>Equipamento</div>
-                  </div>
-                )}
+          
+          {/* ESTATÍSTICAS NO HEADER */}
+          {!loading && !erro && agrupados.length > 0 && (
+            <div style={styles.statsGrid}>
+              <div style={styles.statCard}>
+                <div style={styles.statValue}>{totalChuva.toFixed(2)} mm</div>
+                <div style={styles.statLabel}>Total de Chuva</div>
               </div>
-            )}
-          </div>
+              {!isMobile && (
+                <div style={styles.statCard}>
+                  <div style={styles.statValue}>{equipamento}</div>
+                  <div style={styles.statLabel}>Equipamento</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
