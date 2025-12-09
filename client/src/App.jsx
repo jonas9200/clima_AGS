@@ -18,6 +18,11 @@ export default function App() {
 
   const baseUrl = import.meta.env.VITE_API_URL || "";
 
+  // Função para redirecionar para a página do operador
+  const redirecionarParaOperador = () => {
+    window.location.href = "https://ags-irrigacao.onrender.com/operador";
+  };
+
   // Detecta se é mobile
   useEffect(() => {
     const handleResize = () => {
@@ -697,20 +702,54 @@ export default function App() {
             </div>
           </div>
           
-          {!loading && !erro && agrupados.length > 0 && (
-            <div style={styles.statsGrid}>
-              <div style={styles.statCard}>
-                <div style={styles.statValue}>{totalChuva.toFixed(2)} mm</div>
-                <div style={styles.statLabel}>Total de Chuva</div>
-              </div>
-              {!isMobile && (
+          {/* BOTÃO DE REDIRECIONAMENTO E ESTATÍSTICAS */}
+          <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+            {!loading && !erro && agrupados.length > 0 && (
+              <div style={styles.statsGrid}>
                 <div style={styles.statCard}>
-                  <div style={styles.statValue}>{equipamento}</div>
-                  <div style={styles.statLabel}>Equipamento</div>
+                  <div style={styles.statValue}>{totalChuva.toFixed(2)} mm</div>
+                  <div style={styles.statLabel}>Total de Chuva</div>
                 </div>
-              )}
-            </div>
-          )}
+                {!isMobile && (
+                  <div style={styles.statCard}>
+                    <div style={styles.statValue}>{equipamento}</div>
+                    <div style={styles.statLabel}>Equipamento</div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* BOTÃO DE REDIRECIONAMENTO PARA OPERADOR */}
+            <button 
+              onClick={redirecionarParaOperador}
+              style={{
+                padding: "12px 24px",
+                background: "linear-gradient(135deg, #10b981, #059669)",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: isMobile ? "0.85rem" : "0.9rem",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                boxShadow: "0 4px 15px rgba(16, 185, 129, 0.3)",
+                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+              onMouseOver={(e) => {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 20px rgba(16, 185, 129, 0.4)";
+              }}
+              onMouseOut={(e) => {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
+              }}
+            >
+              🚀 Ir para Operador
+            </button>
+          </div>
         </div>
       </header>
 
