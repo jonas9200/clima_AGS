@@ -727,7 +727,7 @@ export default function App() {
             e.target.style.boxShadow = "0 4px 15px rgba(16, 185, 129, 0.3)";
           }}
         >
-          🚀 Ir para Operador
+          🚀 Lista
         </button>
       </div>
 
