@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import { Line, Bar } from "react-chartjs-2";
 import "chart.js/auto";
 
+// Importações do Leaflet
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Corrigir ícones do Leaflet (problema comum)
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
 export default function App() {
   const [dados, setDados] = useState([]);
   const [equipamentos, setEquipamentos] = useState([]);
@@ -15,8 +28,22 @@ export default function App() {
   const [totalChuva, setTotalChuva] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [activeTab, setActiveTab] = useState("chuva");
+  
+  // Novos estados para o mapa
+  const [mapaAtivo, setMapaAtivo] = useState(false);
+  const [localizacoesEquipamentos, setLocalizacoesEquipamentos] = useState({});
+  const [coordenadasAtuais, setCoordenadasAtuais] = useState([-23.5505, -46.6333]); // São Paulo como padrão
 
   const baseUrl = import.meta.env.VITE_API_URL || "";
+
+  // Mapeamento de coordenadas por equipamento (você pode buscar isso da API)
+  const coordenadasPorEquipamento = {
+    "Pluviometro_01": [-23.5505, -46.6333], // São Paulo
+    "Pluviometro_02": [-22.9068, -43.1729], // Rio de Janeiro
+    "Estacao_01": [-15.7801, -47.9292],     // Brasília
+    "Estacao_02": [-12.9714, -38.5014],     // Salvador
+    // Adicione mais equipamentos e coordenadas aqui
+  };
 
   // Função para redirecionar para a página do operador
   const redirecionarParaOperador = () => {
@@ -37,6 +64,13 @@ export default function App() {
   useEffect(() => {
     carregarEquipamentos();
   }, []);
+
+  // Atualizar coordenadas quando mudar o equipamento
+  useEffect(() => {
+    if (equipamento && coordenadasPorEquipamento[equipamento]) {
+      setCoordenadasAtuais(coordenadasPorEquipamento[equipamento]);
+    }
+  }, [equipamento]);
 
   async function carregarEquipamentos() {
     setLoadingEquipamentos(true);
@@ -334,137 +368,29 @@ export default function App() {
 
   // Estilos DARK MODE com tema azul - OTIMIZADO
   const styles = {
-    container: {
-      minHeight: "100vh",
-      background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-      padding: isMobile ? "10px" : "20px",
-      fontFamily: "'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      color: "#e2e8f0"
-    },
-    header: {
+    // ... (mantenha todos os estilos anteriores)
+
+    // NOVO: Estilos para o card do mapa
+    mapCard: {
       background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "20px",
-      padding: isMobile ? "20px" : "30px",
-      marginBottom: isMobile ? "20px" : "30px",
-      boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
-    },
-    headerContent: {
-      display: "flex",
-      flexDirection: isMobile ? "column" : "row",
-      justifyContent: "space-between",
-      alignItems: isMobile ? "flex-start" : "center",
-      gap: "20px",
-    },
-    titleSection: {
-      display: "flex",
-      alignItems: "center",
-      gap: "15px",
-    },
-    logo: {
-      fontSize: isMobile ? "2rem" : "2.5rem",
-      background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-    },
-    title: {
-      margin: 0,
-      fontSize: isMobile ? "1.5rem" : "2rem",
-      fontWeight: "700",
-      background: "linear-gradient(135deg, #60a5fa, #3b82f6)",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
-    },
-    subtitle: {
-      margin: "8px 0 0 0",
-      color: "#94a3b8",
-      fontSize: isMobile ? "0.9rem" : "1rem",
-      fontWeight: "400",
-    },
-    statsGrid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-      gap: "15px",
-      width: isMobile ? "100%" : "auto",
-    },
-    statCard: {
-      background: "linear-gradient(135deg, #1e40af, #3b82f6)",
+      borderRadius: "15px",
       padding: isMobile ? "15px" : "20px",
-      borderRadius: "15px",
-      color: "white",
-      textAlign: "center",
-      boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-    },
-    statValue: {
-      fontSize: isMobile ? "1.3rem" : "1.6rem",
-      fontWeight: "bold",
-      marginBottom: "5px",
-    },
-    statLabel: {
-      fontSize: isMobile ? "0.7rem" : "0.8rem",
-      opacity: 0.9,
-    },
-    card: {
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "15px",
-      padding: isMobile ? "20px" : "25px",
       marginBottom: isMobile ? "20px" : "25px",
       boxShadow: "0 8px 25px rgba(0, 0, 0, 0.3)",
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
+      border: "1px solid rgba(100, 116, 139, 0.2)",
+      position: "relative",
+      overflow: "hidden"
     },
-    cardTitle: {
-      margin: "0 0 20px 0",
-      fontSize: isMobile ? "1.2rem" : "1.3rem",
-      fontWeight: "600",
-      color: "#e2e8f0",
-      display: "flex",
-      alignItems: "center",
-      gap: "10px",
+    mapContainer: {
+      height: isMobile ? "300px" : "400px",
+      borderRadius: "10px",
+      overflow: "hidden",
+      marginTop: "15px",
+      border: "1px solid rgba(100, 116, 139, 0.3)"
     },
-    formGrid: {
-      display: "grid",
-      gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
-      gap: "15px",
-      marginBottom: "20px",
-    },
-    formGroup: {
-      display: "flex",
-      flexDirection: "column",
-    },
-    label: {
-      marginBottom: "8px",
-      fontWeight: "500",
-      color: "#cbd5e1",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-    },
-    input: {
-      padding: "12px",
-      border: "1px solid #475569",
-      borderRadius: "8px",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-      backgroundColor: "#1e293b",
-      color: "#e2e8f0",
-      transition: "all 0.3s ease",
-    },
-    select: {
-      padding: "12px",
-      border: "1px solid #475569",
-      borderRadius: "8px",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-      backgroundColor: "#1e293b",
-      color: "#e2e8f0",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-    },
-    buttonGroup: {
-      display: "flex",
-      flexDirection: isMobile ? "column" : "row",
-      gap: "12px",
-    },
-    primaryButton: {
-      padding: "12px 24px",
+    mapButton: {
+      marginTop: "15px",
+      padding: "10px 20px",
       background: "linear-gradient(135deg, #1e40af, #3b82f6)",
       color: "white",
       border: "none",
@@ -472,151 +398,21 @@ export default function App() {
       fontSize: isMobile ? "0.85rem" : "0.9rem",
       fontWeight: "600",
       cursor: "pointer",
-      flex: isMobile ? "1" : "none",
       transition: "all 0.3s ease",
-      boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-    },
-    secondaryButton: {
-      padding: "12px 24px",
-      background: "transparent",
-      color: "#94a3b8",
-      border: "1px solid #475569",
-      borderRadius: "8px",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-      fontWeight: "600",
-      cursor: "pointer",
-      flex: isMobile ? "1" : "none",
-      transition: "all 0.3s ease",
-    },
-    quickFilters: {
-      display: "flex",
-      flexDirection: isMobile ? "column" : "row",
-      gap: "12px",
-      flexWrap: "wrap",
-    },
-    quickFilterButton: {
-      padding: "12px 18px",
-      background: "transparent",
-      border: "1px solid #475569",
-      borderRadius: "8px",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-      cursor: "pointer",
-      textAlign: "center",
-      flex: isMobile ? "1" : "none",
-      transition: "all 0.3s ease",
-      fontWeight: "500",
-      color: "#94a3b8",
-    },
-    quickFilterActive: {
-      background: "linear-gradient(135deg, #1e40af, #3b82f6)",
-      color: "white",
-      borderColor: "transparent",
-      boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-    },
-    loading: {
       display: "flex",
       alignItems: "center",
-      gap: "12px",
-      padding: "20px",
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "10px",
-      color: "#94a3b8",
+      gap: "8px",
       justifyContent: "center",
-      fontSize: isMobile ? "0.9rem" : "1rem",
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
+      width: "100%"
     },
-    spinner: {
-      width: "20px",
-      height: "20px",
-      border: "2px solid #475569",
-      borderTop: "2px solid #3b82f6",
-      borderRadius: "50%",
-      animation: "spin 1s linear infinite",
-    },
-    error: {
-      padding: "16px",
-      background: "rgba(239, 68, 68, 0.1)",
-      border: "1px solid #dc2626",
+    locationInfo: {
+      background: "linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.1))",
+      padding: "15px",
       borderRadius: "10px",
-      color: "#fca5a5",
-      textAlign: "center",
-      fontSize: isMobile ? "0.9rem" : "1rem",
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-    },
-    emptyState: {
-      textAlign: "center",
-      padding: "50px 20px",
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "15px",
-      color: "#94a3b8",
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
-    },
-    tabsContainer: {
-      display: "flex",
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "12px",
-      padding: "5px",
-      marginBottom: "20px",
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
-    },
-    tab: {
-      flex: 1,
-      padding: "12px 16px",
-      textAlign: "center",
-      borderRadius: "8px",
-      cursor: "pointer",
-      transition: "all 0.3s ease",
-      fontWeight: "500",
-      fontSize: isMobile ? "0.85rem" : "0.9rem",
-      color: "#94a3b8",
-    },
-    activeTab: {
-      background: "linear-gradient(135deg, #1e40af, #3b82f6)",
-      color: "white",
-      boxShadow: "0 4px 15px rgba(59, 130, 246, 0.3)",
-    },
-    chartCard: {
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "15px",
-      padding: isMobile ? "15px 20px" : "20px 25px",
-      boxShadow: "0 8px 25px rgba(0, 0, 0, 0.3)",
-      height: isMobile ? "380px" : "420px",
-      marginBottom: isMobile ? "20px" : "25px",
-      minHeight: "380px",
-      border: "1px solid rgba(100, 116, 139, 0.2)",
-      display: "flex",
-      flexDirection: "column",
-    },
-    chartHeader: {
-      marginBottom: "12px",
-      textAlign: "center",
-      flexShrink: 0,
-    },
-    chartTitle: {
-      margin: 0,
-      fontSize: isMobile ? "1.1rem" : "1.2rem",
-      fontWeight: "600",
-      color: "#e2e8f0",
-    },
-    chartContainer: {
-      flex: 1,
-      minHeight: 0,
-      position: "relative",
-    },
-    chartsSection: {
-      marginBottom: isMobile ? "20px" : "30px",
-    },
-    summaryCard: {
-      background: "rgba(30, 41, 59, 0.8)",
-      borderRadius: "15px",
-      padding: isMobile ? "20px" : "25px",
-      marginBottom: isMobile ? "20px" : "25px",
-      boxShadow: "0 4px 15px rgba(0, 0, 0, 0.3)",
-      backdropFilter: "blur(10px)",
-      border: "1px solid rgba(100, 116, 139, 0.2)"
+      marginTop: "15px",
+      border: "1px solid rgba(59, 130, 246, 0.2)",
+      fontSize: isMobile ? "0.85rem" : "0.95rem",
+      color: "#cbd5e1"
     }
   };
 
@@ -685,6 +481,13 @@ export default function App() {
       default:
         return null;
     }
+  };
+
+  // Estilo personalizado para o mapa dark mode
+  const darkMapStyle = {
+    height: '100%',
+    width: '100%',
+    borderRadius: '8px'
   };
 
   return (
@@ -836,6 +639,54 @@ export default function App() {
             🗑️ Limpar Filtros
           </button>
         </div>
+      </div>
+
+      {/* 🗺️ CARD DO MAPA - NOVO */}
+      <div style={styles.mapCard}>
+        <h3 style={styles.cardTitle}>🗺️ Localização do Equipamento</h3>
+        
+        <div style={styles.locationInfo}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: "10px" }}>
+            <div><strong>📡 Equipamento:</strong> {equipamento || "Não selecionado"}</div>
+            <div><strong>📍 Coordenadas:</strong> {coordenadasAtuais[0].toFixed(4)}, {coordenadasAtuais[1].toFixed(4)}</div>
+          </div>
+        </div>
+
+        <div style={styles.mapContainer}>
+          <MapContainer 
+            center={coordenadasAtuais} 
+            zoom={13} 
+            style={darkMapStyle}
+            scrollWheelZoom={true}
+          >
+            {/* Tile layer para dark mode */}
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            />
+            <Marker position={coordenadasAtuais}>
+              <Popup>
+                <div style={{ color: '#000' }}>
+                  <strong>{equipamento}</strong><br />
+                  Latitude: {coordenadasAtuais[0].toFixed(6)}<br />
+                  Longitude: {coordenadasAtuais[1].toFixed(6)}
+                </div>
+              </Popup>
+            </Marker>
+          </MapContainer>
+        </div>
+
+        <button 
+          style={styles.mapButton}
+          onClick={() => {
+            // Abrir no Google Maps
+            window.open(`https://www.google.com/maps?q=${coordenadasAtuais[0]},${coordenadasAtuais[1]}`, '_blank');
+          }}
+          onMouseOver={(e) => e.target.style.transform = "translateY(-2px)"}
+          onMouseOut={(e) => e.target.style.transform = "translateY(0)"}
+        >
+          📍 Abrir no Google Maps
+        </button>
       </div>
 
       {/* ⏱️ FILTROS RÁPIDOS - DARK MODE */}
@@ -996,6 +847,25 @@ export default function App() {
           background: #0f172a;
           margin: 0;
           padding: 0;
+        }
+
+        /* Estilos para o Leaflet */
+        .leaflet-container {
+          font-family: inherit;
+        }
+        
+        .leaflet-popup-content {
+          font-size: 14px;
+        }
+        
+        .leaflet-control-zoom a {
+          background-color: #1e293b !important;
+          color: #e2e8f0 !important;
+          border-color: #475569 !important;
+        }
+        
+        .leaflet-control-zoom a:hover {
+          background-color: #374151 !important;
         }
       `}</style>
     </div>
